@@ -1,22 +1,40 @@
-use crate::ConfigurationMap;
+use crate::tree::{Configurations, Tree};
 use itertools::iproduct;
+use rug::Rational;
 
-pub fn generate() -> ConfigurationMap {
-    let mut map = ConfigurationMap::new();
+const CAP: i32 = 45;
 
-    let stem_height = 4..=6;
-    let should_double = 0..12;
-    let random_product = iproduct!(stem_height, should_double);
+pub struct HugeMushroom {
+    name: String,
+}
 
-    for (stem_height, should_double) in random_product {
-        let mut blocks = vec![stem_height as f64, 45.0];
-        if should_double == 0 {
-            blocks[0] *= 2.0;
+impl HugeMushroom {
+    pub fn new(name: &str) -> Self {
+        HugeMushroom {
+            name: name.to_string(),
         }
+    }
+}
 
-        let key = vec![stem_height, should_double];
-        map.insert(key, blocks);
+impl Tree for HugeMushroom {
+    fn name(&self) -> &String {
+        &self.name
     }
 
-    map
+    fn get_configurations(&self) -> Configurations {
+        let mut map = Configurations::new();
+        let stem = 4..=6;
+        let should_double = 0..12;
+        let product = iproduct!(stem, should_double);
+
+        for (mut stem, should_double) in product {
+            let key = vec![stem, should_double];
+            if should_double == 0 {
+                stem *= 2;
+            }
+            map.insert(key, vec![Rational::from(stem), Rational::from(CAP)]);
+        }
+
+        map
+    }
 }

@@ -5,21 +5,21 @@ use rug::Rational;
 
 use crate::tree::{Configurations, Tree};
 
-pub struct GiantTree {
+pub struct SimpleTree {
     name: String,
     base_height: i32,
     first_random_height: RangeInclusive<i32>,
     second_random_height: RangeInclusive<i32>,
 }
 
-impl GiantTree {
+impl SimpleTree {
     pub fn new(
         name: &str,
         base_height: i32,
         first_random_height: i32,
         second_random_height: i32,
     ) -> Self {
-        GiantTree {
+        SimpleTree {
             name: name.to_string(),
             base_height,
             first_random_height: 0..=first_random_height,
@@ -28,7 +28,7 @@ impl GiantTree {
     }
 }
 
-impl Tree for GiantTree {
+impl Tree for SimpleTree {
     fn name(&self) -> &String {
         &self.name
     }
@@ -43,7 +43,7 @@ impl Tree for GiantTree {
 
         for (first_height, second_height) in product {
             let key = vec![first_height, second_height];
-            let logs = 4 * (self.base_height + first_height + second_height) - 3;
+            let logs = self.base_height + first_height + second_height;
 
             map.insert(key, vec![Rational::from(logs)]);
         }

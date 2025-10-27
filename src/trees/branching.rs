@@ -1,6 +1,7 @@
 use crate::ConfigurationMap;
 use itertools::iproduct;
 
+// TODO:
 pub fn generate(
     base_height: i32,
     first_random: i32,
@@ -12,16 +13,16 @@ pub fn generate(
 
     let first_random = 0..=first_random;
     let second_random = 0..=second_random;
-    let maximum_branch_length = (branch_length.0..=branch_length.1).count() as f64;
+    let maximum_branch_length = (branch_length.0..=branch_length.1).count();
 
     let random_product = iproduct!(first_random, second_random);
 
     for (first_rand, second_rand) in random_product {
-        let mut logs = vec![0.0; maximum_branch_length as usize];
+        let mut logs = vec![crate::F::from(0); maximum_branch_length];
         let height = base_height + first_rand + second_rand;
 
         // Generate map of average number of logs per branch
-        let mut branch_logs = vec![0.0; maximum_branch_length as usize];
+        let mut branch_logs = vec![crate::F::from(0); maximum_branch_length];
         for length in (branch_length.0)..=(branch_length.1) {
             let mut offset = 0;
             let mut remaining_length = length - 1;
@@ -37,9 +38,9 @@ pub fn generate(
             }
         }
 
-        logs[0] += height as f64;
+        logs[0] += height;
         for index in 0..logs.len() {
-            logs[index] += branch_logs[index] / maximum_branch_length * (height as f64 - 1.0);
+            logs[index] += branch_logs[index] / (maximum_branch_length) * (height - 1);
         }
 
         let key = vec![first_rand, second_rand];

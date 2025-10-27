@@ -2,19 +2,18 @@ use itertools::iproduct;
 
 use crate::ConfigurationMap;
 
-pub fn generate(base_height: i32, first_random: i32, second_random: i32) -> ConfigurationMap {
+// TODO:
+pub fn generate(base: i32, first: i32, second: i32) -> ConfigurationMap {
     let mut map = ConfigurationMap::new();
-
-    let first_rand = 0..=first_random;
-    let second_rand = 0..=second_random;
+    let first = 0..=first;
+    let second = 0..=second;
     let first_branch_height = 1..=4;
     let first_branch_length = 1..=3;
     let second_branch_height = 1..=2;
     let second_branch_length = 1..=3;
-
-    let random_product = iproduct!(
-        first_rand,
-        second_rand,
+    let product = iproduct!(
+        first,
+        second,
         first_branch_height,
         first_branch_length,
         second_branch_height,
@@ -28,13 +27,13 @@ pub fn generate(base_height: i32, first_random: i32, second_random: i32) -> Conf
         first_branch_length,
         second_branch_height,
         second_branch_length,
-    ) in random_product
+    ) in product
     {
-        let mut logs = vec![0.0; 4];
+        let mut logs = vec![crate::F::from(0); 4];
         let mut branch_len = first_branch_length;
         let mut x_offset = 0;
 
-        let height = base_height + first_rand + second_rand;
+        let height = base + first_rand + second_rand;
         let base_trunk_height = height - first_branch_height;
 
         for m in 0..height {
@@ -42,7 +41,7 @@ pub fn generate(base_height: i32, first_random: i32, second_random: i32) -> Conf
                 x_offset += 1;
                 branch_len -= 1;
             }
-            logs[x_offset] += 1.0;
+            logs[x_offset] += 1;
         }
 
         x_offset = 0;
@@ -57,7 +56,7 @@ pub fn generate(base_height: i32, first_random: i32, second_random: i32) -> Conf
             if p >= 1 {
                 x_offset += 1;
                 // Runs only 1/4 of the time
-                logs[x_offset] += 0.75;
+                logs[x_offset] += crate::F::new(3u32, 4u32);
             }
 
             branch_len -= 1;

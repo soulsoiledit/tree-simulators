@@ -1,7 +1,10 @@
-use crate::ConfigurationMap;
-use itertools::{iproduct, repeat_n, Itertools};
 use std::f64::consts::PI;
 
+use crate::ConfigurationMap;
+use crate::F;
+use itertools::{iproduct, repeat_n, Itertools};
+
+// TODO:
 pub fn generate(base_height: i32, first_random: i32, second_random: i32) -> ConfigurationMap {
     let mut map = ConfigurationMap::new();
 
@@ -11,7 +14,7 @@ pub fn generate(base_height: i32, first_random: i32, second_random: i32) -> Conf
 
     let random_product = iproduct!(first_rand, second_rand, trunk_sub);
 
-    // Old approximate multiplier generation
+    // Old approximate multiplier generation for reference
     // const DIVISIONS: i32 = i16::MAX as i32;
     // const DIVISIONS_FLOAT: f64 = DIVISIONS as f64;
     // let mut branch_multiplier = vec![0.0; 5];
@@ -42,46 +45,47 @@ pub fn generate(base_height: i32, first_random: i32, second_random: i32) -> Conf
     // }
 
     // Exact multipliers were found using lots of bad math
-    let asin_1_4 = (1.0 / 4.0f64).asin();
-    let asin_3_4 = (3.0 / 4.0f64).asin();
-    let asin_1_2 = PI / 6.0;
-    let asin_5_6 = (5.0 / 6.0f64).asin();
-    let asin_5_8 = (5.0 / 8.0f64).asin();
-    let asin_7_8 = (7.0 / 8.0f64).asin();
-    let branch_multiplier = [
-        0.0,
-        (7.0 / 12.0) + (asin_7_8 + asin_1_2 - asin_5_6 + 2.0 * asin_3_4 - asin_1_4) / PI,
-        1.25 + (asin_5_8 - asin_7_8 + 2.0 * asin_5_6 - asin_1_2 - 2.0 * asin_3_4) / PI,
-        0.75 + (2.0 * asin_7_8 - asin_5_8 - 2.0 * asin_5_6) / PI,
-        1.0 - (2.0 * asin_7_8) / PI,
+    let asin_1_4 = F::from((1.0 / 4.0f64).asin());
+    let asin_3_4 = F::from((3.0 / 4.0f64).asin());
+    let asin_1_2 = F::from(PI / 6.0);
+    let asin_5_6 = F::from((5.0 / 6.0f64).asin());
+    let asin_5_8 = F::from((5.0 / 8.0f64).asin());
+    let asin_7_8 = F::from((7.0 / 8.0f64).asin());
+    let branch_multiplier: [F; 5] = [
+        F::from(0),
+        F::new(7u64, 12u64) + (asin_7_8 + asin_1_2 - asin_5_6 + asin_3_4 * 2 - asin_1_4) / PI,
+        F::new(5u64, 4u64) + (asin_5_8 - asin_7_8 + asin_5_6 * 2 - asin_1_2 - asin_3_4 * 2) / PI,
+        F::new(3u64, 4u64) + (asin_7_8 * 2 - asin_5_8 - asin_5_6 * 2) / PI,
+        F::from(1) - (asin_7_8 * 2) / PI,
     ];
 
     for (first_rand, second_rand, sub) in random_product {
-        let mut logs = vec![0.0; 5];
+        let mut logs = vec![F::from(0); 5];
 
-        let height = (base_height + first_rand + second_rand) as f64;
-        logs[0] += 4.0 * height - 3.0;
+        let height = F::from(base_height + first_rand + second_rand);
+        logs[0] += height * 4 - 3;
 
-        let branch_height = height - 2.0 - sub as f64;
-        let maximum_iterations = (height / 4.0).floor();
-        let sequences = repeat_n(vec![0.0, 1.0, 2.0, 3.0], maximum_iterations as usize)
+        let branch_height = height - 2 - sub;
+        let maximum_iterations: u32 = (height / 4).floor().try_into().unwrap();
+        let sequences = repeat_n(vec![0, 1, 2, 3], maximum_iterations.try_into().unwrap())
             .multi_cartesian_product();
 
-        let mut temp_value = 0.0;
+        let mut temp_value = 0;
         for sequence in sequences {
-            let mut temp_branch_height = branch_height;
+            let mut temp_branch_height = F::from(branch_height);
             for step in sequence {
-                if temp_branch_height <= height / 2.0 {
+                if temp_branch_height <= (height / 2) {
                     break;
                 }
-                temp_value += 1.0;
-                temp_branch_height -= 2.0 + step;
+                temp_value += 1;
+                temp_branch_height -= 2 + step;
             }
         }
-        let temp_scaled = temp_value / 4f64.powf(maximum_iterations);
+
+        let temp_scaled = temp_value / 4i32.pow(maximum_iterations);
 
         for index in 1..logs.len() {
-            logs[index] += temp_scaled * branch_multiplier[index];
+            logs[index] += branch_multiplier[index] * temp_scaled;
         }
 
         let key = vec![first_rand, second_rand, sub];

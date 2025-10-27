@@ -2,14 +2,19 @@ use itertools::{iproduct, repeat_n, Itertools};
 
 use crate::ConfigurationMap;
 
+use fraction::Fraction;
+
+type F = Fraction;
+
+// TODO:
 fn generate_branch(
     tree_height: i32,
     start_height: i32,
     is_low_branch: bool,
     length: i32,
     end_offset: i32,
-) -> Vec<f64> {
-    let mut branch_logs = vec![0.0; 6];
+) -> Vec<Fraction> {
+    let mut branch_logs = vec![F::from(0); 6];
     let mut branch_offset = 0;
 
     let end_height = tree_height - 1 + end_offset;
@@ -20,22 +25,22 @@ fn generate_branch(
     // Go outwards by the starting lenght
     for _ in 0..base_length {
         branch_offset += 1;
-        branch_logs[branch_offset] += 1.0;
+        branch_logs[branch_offset] += 1;
     }
 
     // Create probability tree for all possible branch generations
     let manhattan = (end_height + end_length) - base_length - start_height;
     let sequences = repeat_n(vec![false, true], manhattan as usize).multi_cartesian_product();
-    let start_height = start_height as f64;
+    let start_height = start_height;
 
     // Iterate over every possible branch generation
     for seq in sequences {
-        let mut temp_manhattan = manhattan as f64;
-        let mut remaining_height = end_height as f64;
+        let mut temp_manhattan = manhattan;
+        let mut remaining_height = end_height;
         let mut remaining_length = end_length - base_length;
         let mut temp_branch_offset = branch_offset;
-        let mut temp_logs = [0.0; 6];
-        let mut chance = 1.0;
+        let mut temp_logs = [F::from(0); 6];
+        let mut chance = F::from(1);
 
         for value in seq {
             let y_error = (remaining_height - start_height).abs() / temp_manhattan;
@@ -44,19 +49,19 @@ fn generate_branch(
                 // Multiply by y_error to get chance of event occuring
                 chance *= y_error;
                 // Some combinations aren't always possible...
-                if remaining_height > 0.0 {
-                    remaining_height -= 1.0;
+                if remaining_height > 0 {
+                    remaining_height -= 1;
                 }
             } else {
-                chance *= 1.0 - y_error;
+                chance *= 1 - y_error;
                 if remaining_length > 0 {
                     remaining_length -= 1;
                     temp_branch_offset += 1;
                 }
             }
 
-            temp_logs[temp_branch_offset] += 1.0;
-            temp_manhattan -= 1.0;
+            temp_logs[temp_branch_offset] += 1;
+            temp_manhattan -= 1;
         }
 
         // Add logs in this sequence multiplied by total chance of the sequence
@@ -111,7 +116,7 @@ pub fn generate(
         s_end_offset,
     ) in random_product
     {
-        let mut logs = vec![0.0; 6];
+        let mut logs = vec![F::from(0); 6];
 
         let height = base_height + first + second;
         let fb_height = height - 1 + f_offset;
@@ -131,7 +136,7 @@ pub fn generate(
                 fb_height + 1
             }
         };
-        logs[0] += trunk_height as f64;
+        logs[0] += trunk_height;
 
         let branch = generate_branch(
             height,

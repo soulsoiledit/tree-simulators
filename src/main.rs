@@ -1,9 +1,13 @@
-use rand::Rng;
-use std::collections::HashMap;
-use strum::IntoEnumIterator;
-use strum_macros::EnumIter;
-
+mod tree;
 mod trees;
+
+use rand::Rng;
+
+use crate::tree::Tree;
+use crate::trees::fungus::HugeFungus;
+use crate::trees::giant::GiantTree;
+use crate::trees::mushroom::HugeMushroom;
+use crate::trees::simple::SimpleTree;
 
 #[allow(dead_code)]
 fn bonemeal(attempts: i64) {
@@ -44,83 +48,36 @@ fn bonemeal(attempts: i64) {
     println!("{}", success_rate * TREES_PLANTED as f64);
 }
 
-#[derive(Debug, EnumIter)]
-enum Tree {
-    Birch,
-    Oak,
-    Jungle,
-    Spruce,
-
-    Acacia,
-    Azalea,
-    Cherry,
-
-    Fungus,
-    Mushroom,
-
-    MegaSpruce,
-    DarkOak,
-    MegaJungle,
-
-    Mangrove,
-    TallMangrove,
-
-    Pine,
-    MegaPine,
-    TallBirch,
-    SwampOak,
-    JungleBush,
-}
-
-type ConfigurationMap = HashMap<Vec<i32>, Vec<f64>>;
-
-fn get_average(configuration: ConfigurationMap) -> String {
-    let value_length = configuration.values().next().unwrap().len();
-    let mut sums = vec![0.0; value_length];
-    for entry in configuration.values() {
-        for index in 0..value_length {
-            sums[index] += entry[index];
-        }
-    }
-
-    let mut averages = vec![];
-    for sum in &sums {
-        averages.push(sum / configuration.len() as f64);
-    }
-
-    format!("{} {:?} {:?}", configuration.len(), sums, averages)
-}
-
 fn main() {
-    for tree_type in Tree::iter() {
-        let tree_configurations = match tree_type {
-            Tree::Birch => trees::simple::generate(5, 2, 0),
-            Tree::Oak => trees::simple::generate(4, 2, 0),
-            Tree::Jungle => trees::simple::generate(4, 8, 0),
-            Tree::Spruce => trees::simple::generate(5, 2, 1),
+    let trees: Vec<Box<dyn Tree>> = vec![
+        Box::new(SimpleTree::new("Birch", 5, 2, 0)),
+        Box::new(SimpleTree::new("Oak", 4, 2, 0)),
+        Box::new(SimpleTree::new("Jungle", 4, 8, 0)),
+        Box::new(SimpleTree::new("Spruce", 5, 2, 1)),
+        // Tree::Acacia => trees::acacia::generate(5, 2, 2),
+        // Tree::Azalea => trees::azalea::generate(4, 2, 0, (1, 2)),
+        // Tree::Cherry => {
+        //     trees::cherry::generate(7, 1, 0, vec![1, 2, 3], (2, 4), (-4, -3), (-1, 0))
+        // }
+        //
+        Box::new(HugeFungus::new("Huge Fungus")),
+        Box::new(HugeMushroom::new("Huge Mushroom")),
+        //
+        Box::new(GiantTree::new("2x2 Spruce", 13, 2, 14)),
+        // Tree::DarkOak => trees::dark_oak::generate(6, 2, 1),
+        // Tree::MegaJungle => trees::jungle::generate(10, 2, 19),
+        //
+        // Tree::Mangrove => trees::mangrove::generate(2, 1, 4, (1, 4), 0.5),
+        // Tree::TallMangrove => trees::mangrove::generate(4, 1, 9, (1, 6), 0.5),
+        //
+        Box::new(SimpleTree::new("Pine", 6, 4, 0)),
+        Box::new(GiantTree::new("2x2 Pine", 13, 2, 14)),
+        Box::new(SimpleTree::new("Tall Birch", 5, 2, 6)),
+        Box::new(SimpleTree::new("Swamp Oak", 5, 3, 0)),
+        Box::new(SimpleTree::new("Jungle Bush", 1, 0, 0)),
+    ];
 
-            Tree::Acacia => trees::acacia::generate(5, 2, 2),
-            Tree::Azalea => trees::azalea::generate(4, 2, 0, (1, 2)),
-            Tree::Cherry => {
-                trees::cherry::generate(7, 1, 0, vec![1, 2, 3], (2, 4), (-4, -3), (-1, 0))
-            }
-
-            Tree::Fungus => trees::fungus::generate(),
-            Tree::Mushroom => trees::mushroom::generate(),
-
-            Tree::MegaSpruce => trees::giant::generate(13, 2, 14),
-            Tree::DarkOak => trees::dark_oak::generate(6, 2, 1),
-            Tree::MegaJungle => trees::jungle::generate(10, 2, 19),
-
-            Tree::Mangrove => trees::mangrove::generate(2, 1, 4, (1, 4), 0.5),
-            Tree::TallMangrove => trees::mangrove::generate(4, 1, 9, (1, 6), 0.5),
-
-            Tree::Pine => trees::simple::generate(6, 4, 0),
-            Tree::MegaPine => trees::giant::generate(13, 2, 14),
-            Tree::TallBirch => trees::simple::generate(5, 2, 6),
-            Tree::SwampOak => trees::simple::generate(5, 3, 0),
-            Tree::JungleBush => trees::simple::generate(1, 0, 0),
-        };
-        println!("{:?}: {}", tree_type, get_average(tree_configurations));
+    for tree in trees {
+        tree.print_results();
     }
 }
