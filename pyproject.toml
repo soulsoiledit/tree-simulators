@@ -1,0 +1,7 @@
+[project]
+name = "tree-simulators"
+version = "0.1.0"
+description = "Performs analysis on average log count of Minecraft trees with (mostly) real distributions"
+readme = "README.md"
+requires-python = ">=3.13"
+dependencies = []
